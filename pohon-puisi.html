@@ -1,0 +1,543 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pohon Makna Puisi</title>
+
+<style>
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: #f5f2e7;
+  color: #344b37;
+  font-family: Georgia, serif;
+}
+
+header {
+  text-align: center;
+  padding: 25px 12px 12px;
+}
+
+header h1 {
+  margin: 0 0 8px;
+  font-size: 28px;
+}
+
+header p {
+  font: 14px Arial, sans-serif;
+  color: #73816a;
+}
+
+.instructions {
+  max-width: 800px;
+  margin: 12px auto;
+  padding: 14px;
+  background: #fffdf5;
+  border: 1px solid #dce3ce;
+  border-radius: 14px;
+  font: 14px/1.6 Arial, sans-serif;
+}
+
+.tree-scroll {
+  max-width: 1000px;
+  margin: 0 auto;
+  overflow-x: auto;
+  background: linear-gradient(#edf3df, #fbf7e9);
+  border-radius: 20px;
+  border: 1px solid #dce3ce;
+}
+
+svg {
+  display: block;
+  width: 100%;
+  min-width: 760px;
+  height: auto;
+}
+
+.wood {
+  fill: none;
+  stroke: #805536;
+  stroke-width: 15;
+  stroke-linecap: round;
+}
+
+.trunk {
+  fill: none;
+  stroke: #805536;
+  stroke-width: 45;
+  stroke-linecap: round;
+}
+
+.branch-label {
+  cursor: pointer;
+}
+
+.branch-label rect {
+  fill: #fff9e8;
+  stroke: #a8b891;
+  stroke-width: 1.5;
+  rx: 12;
+  transition: .2s;
+}
+
+.branch-label:hover rect {
+  fill: #e2edcf;
+  stroke: #55794d;
+  stroke-width: 3;
+}
+
+.branch-label text {
+  fill: #344b37;
+  font-family: Arial, sans-serif;
+  font-size: 15px;
+  font-weight: bold;
+  pointer-events: none;
+}
+
+.branch-label .number {
+  fill: #66865a;
+  font-size: 11px;
+}
+
+.leaf-answer {
+  cursor: pointer;
+}
+
+.leaf-answer path {
+  fill: #b7d99a;
+  stroke: #648a52;
+  stroke-width: 1.5;
+}
+
+.leaf-answer text {
+  font: 12px Arial, sans-serif;
+  fill: #29452e;
+  pointer-events: none;
+}
+
+.tree-title {
+  fill: #fff7dd;
+  stroke: #a7b88e;
+  stroke-width: 2;
+}
+
+#modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  background: #17271a99;
+  padding: 15px;
+  align-items: center;
+  justify-content: center;
+}
+
+.dialog {
+  background: #fffdf5;
+  border-radius: 18px;
+  padding: 24px;
+  width: 100%;
+  max-width: 460px;
+  box-shadow: 0 12px 35px #0002;
+}
+
+.dialog h2 { margin-top: 0; }
+
+#chosenLine {
+  padding: 12px;
+  background: #edf3e4;
+  border-radius: 10px;
+  line-height: 1.5;
+}
+
+label {
+  display: block;
+  margin-top: 14px;
+  font: bold 14px Arial, sans-serif;
+}
+
+input, textarea {
+  width: 100%;
+  padding: 12px;
+  margin-top: 7px;
+  border: 1px solid #cbd7c0;
+  border-radius: 9px;
+  font: 14px Arial, sans-serif;
+}
+
+textarea {
+  min-height: 110px;
+  resize: vertical;
+}
+
+button {
+  border: 0;
+  padding: 12px 16px;
+  margin-top: 14px;
+  border-radius: 9px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.save {
+  background: #55794d;
+  color: white;
+}
+
+.cancel {
+  background: #e8ecdf;
+  color: #344b37;
+  margin-left: 5px;
+}
+
+#progress {
+  text-align: center;
+  padding: 15px;
+  font: 14px Arial, sans-serif;
+  color: #657b58;
+}
+
+footer {
+  text-align: center;
+  padding: 16px;
+  font: 12px Arial, sans-serif;
+  color: #7c8874;
+}
+
+@media (max-width: 600px) {
+  header h1 { font-size: 23px; }
+  .instructions { margin: 10px; }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>🌳 Pohon Makna Puisi</h1>
+  <p>Temukan makna, tumbuhkan pemahaman.</p>
+</header>
+
+<div class="instructions">
+  <b>Petunjuk:</b> Klik larik puisi yang tertulis pada cabang.
+  Tuliskan maknanya menurut pemahamanmu. Setelah disimpan,
+  jawabanmu akan tumbuh sebagai daun pada pohon.
+</div>
+
+<div class="tree-scroll">
+<svg id="tree" viewBox="0 0 1000 900"
+     xmlns="http://www.w3.org/2000/svg">
+
+  <defs>
+    <linearGradient id="bark" x1="0" x2="1">
+      <stop offset="0%" stop-color="#67452d"/>
+      <stop offset="50%" stop-color="#a5774e"/>
+      <stop offset="100%" stop-color="#67452d"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Batang utama -->
+  <path class="trunk"
+    stroke="url(#bark)"
+    d="M500 810 Q480 690 500 580 Q505 470 500 330"/>
+
+  <!-- Akar -->
+  <path class="wood" stroke-width="9"
+    d="M500 790 Q430 825 370 830
+       M500 790 Q560 830 630 830
+       M495 800 Q470 845 450 850
+       M505 800 Q530 845 550 850"/>
+
+  <!-- Cabang 1 -->
+  <path class="wood"
+    d="M500 350 Q390 300 100 285"/>
+  <path class="wood" stroke-width="6"
+    d="M290 316 Q260 275 245 260"/>
+
+  <!-- Cabang 2 -->
+  <path class="wood"
+    d="M500 420 Q610 375 900 365"/>
+  <path class="wood" stroke-width="6"
+    d="M710 395 Q740 355 760 345"/>
+
+  <!-- Cabang 3 -->
+  <path class="wood"
+    d="M500 490 Q390 450 100 475"/>
+  <path class="wood" stroke-width="6"
+    d="M290 462 Q270 425 250 415"/>
+
+  <!-- Cabang 4 -->
+  <path class="wood"
+    d="M500 560 Q610 515 900 535"/>
+  <path class="wood" stroke-width="6"
+    d="M710 530 Q740 495 765 485"/>
+
+  <!-- Cabang 5 -->
+  <path class="wood"
+    d="M500 630 Q390 595 100 650"/>
+  <path class="wood" stroke-width="6"
+    d="M290 612 Q270 580 245 570"/>
+
+  <!-- Cabang 6 -->
+  <path class="wood"
+    d="M500 700 Q610 660 900 705"/>
+  <path class="wood" stroke-width="6"
+    d="M710 672 Q740 640 765 630"/>
+
+  <!-- Judul di batang -->
+  <rect class="tree-title"
+    x="390" y="735" width="220" height="65" rx="15"/>
+  <text x="500" y="755" text-anchor="middle"
+    font-family="Arial" font-size="11" fill="#72825d">
+    POHON MAKNA PUISI
+  </text>
+  <text x="500" y="779" text-anchor="middle"
+    font-size="23" font-weight="bold" fill="#344b37">
+    Aku Ingin
+  </text>
+  <text x="500" y="792" text-anchor="middle"
+    font-family="Arial" font-size="10" fill="#72825d">
+    Sapardi Djoko Damono
+  </text>
+
+  <!-- Larik langsung di cabang -->
+  <g id="branchLabels"></g>
+
+  <!-- Daun jawaban -->
+  <g id="answerLeaves"></g>
+
+  <!-- Rumput -->
+  <path d="M150 835 Q500 815 850 835"
+    fill="none" stroke="#9db487" stroke-width="4"
+    stroke-linecap="round"/>
+</svg>
+</div>
+
+<div id="progress">🍃 0 dari 6 larik sudah memiliki daun makna.</div>
+
+<footer>
+  Media pembelajaran Bahasa Indonesia · Pohon Makna Puisi
+</footer>
+
+<div id="modal">
+  <div class="dialog">
+    <h2>🍃 Tumbuhkan Makna</h2>
+
+    <div id="chosenLine"></div>
+
+    <label for="studentName">Nama siswa</label>
+    <input id="studentName" placeholder="Tulis namamu">
+
+    <label for="meaning">Makna larik menurutmu</label>
+    <textarea id="meaning"
+      placeholder="Menurut saya, larik ini bermakna..."></textarea>
+
+    <button class="save" onclick="saveAnswer()">
+      🌱 Tumbuhkan Daun
+    </button>
+    <button class="cancel" onclick="closeModal()">Batal</button>
+  </div>
+</div>
+
+<script>
+const lines = [
+  "Aku ingin mencintaimu dengan sederhana",
+  "dengan kata yang tak sempat diucapkan",
+  "kayu kepada api yang menjadikannya abu",
+  "Aku ingin mencintaimu dengan sederhana",
+  "dengan isyarat yang tak sempat disampaikan",
+  "awan kepada hujan yang menjadikannya tiada"
+];
+
+// Label larik diletakkan langsung di atas cabang.
+const branches = [
+  {x:65, y:205, w:385, h:64, side:"left"},
+  {x:550, y:285, w:385, h:64, side:"right"},
+  {x:65, y:395, w:385, h:64, side:"left"},
+  {x:550, y:465, w:385, h:64, side:"right"},
+  {x:65, y:570, w:385, h:64, side:"left"},
+  {x:550, y:635, w:385, h:64, side:"right"}
+];
+
+let answers = {};
+let selected = null;
+
+const NS = "http://www.w3.org/2000/svg";
+const labels = document.getElementById("branchLabels");
+const leaves = document.getElementById("answerLeaves");
+
+function svgEl(tag, attrs = {}) {
+  const el = document.createElementNS(NS, tag);
+  for (const [key, value] of Object.entries(attrs)) {
+    el.setAttribute(key, value);
+  }
+  return el;
+}
+
+function drawBranches() {
+  labels.innerHTML = "";
+
+  branches.forEach((b, i) => {
+    const g = svgEl("g", {
+      class: "branch-label",
+      tabindex: "0",
+      role: "button",
+      "aria-label": "Isi makna larik " + (i + 1)
+    });
+
+    g.appendChild(svgEl("rect", {
+      x: b.x, y: b.y, width: b.w, height: b.h
+    }));
+
+    const num = svgEl("text", {
+      x: b.x + 13,
+      y: b.y + 19,
+      class: "number"
+    });
+    num.textContent = "LARIK " + (i + 1);
+    g.appendChild(num);
+
+    // Teks larik dibungkus menjadi dua baris.
+    const words = lines[i].split(" ");
+    const rows = [];
+    let row = "";
+
+    words.forEach(word => {
+      const test = row ? row + " " + word : word;
+      if (test.length > 38 && row) {
+        rows.push(row);
+        row = word;
+      } else {
+        row = test;
+      }
+    });
+    if (row) rows.push(row);
+
+    const poemText = svgEl("text", {
+      x: b.x + 13,
+      y: b.y + 39
+    });
+
+    rows.slice(0, 2).forEach((line, j) => {
+      const span = svgEl("tspan", {
+        x: b.x + 13,
+        dy: j === 0 ? 0 : 18
+      });
+      span.textContent = line;
+      poemText.appendChild(span);
+    });
+
+    g.appendChild(poemText);
+
+    g.addEventListener("click", () => openModal(i));
+    g.addEventListener("keydown", e => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        openModal(i);
+      }
+    });
+
+    labels.appendChild(g);
+  });
+}
+
+function openModal(i) {
+  selected = i;
+  document.getElementById("chosenLine").textContent =
+    "Larik " + (i + 1) + ": " + lines[i];
+
+  document.getElementById("studentName").value =
+    answers[i]?.name || "";
+
+  document.getElementById("meaning").value =
+    answers[i]?.meaning || "";
+
+  document.getElementById("modal").style.display = "flex";
+}
+
+function closeModal() {
+  document.getElementById("modal").style.display = "none";
+}
+
+function saveAnswer() {
+  const name = document.getElementById("studentName").value.trim();
+  const meaning = document.getElementById("meaning").value.trim();
+
+  if (!name || !meaning) {
+    alert("Isi nama dan makna larik terlebih dahulu, ya!");
+    return;
+  }
+
+  answers[selected] = {name, meaning};
+  drawLeaves();
+  closeModal();
+}
+
+function drawLeaves() {
+  leaves.innerHTML = "";
+
+  Object.keys(answers).forEach(key => {
+    const i = Number(key);
+    const b = branches[i];
+    const answer = answers[i];
+
+    // Daun ditempatkan di dekat cabang yang sesuai.
+    const x = b.side === "left" ? 115 : 785;
+    const y = b.y + 72;
+
+    const g = svgEl("g", {
+      class: "leaf-answer",
+      role: "button",
+      tabindex: "0",
+      "aria-label": "Jawaban " + answer.name +
+        ": " + answer.meaning
+    });
+
+    // Bentuk daun.
+    g.appendChild(svgEl("path", {
+      d: `M ${x} ${y}
+          Q ${x+35} ${y-23} ${x+75} ${y}
+          Q ${x+40} ${y+30} ${x} ${y} Z`
+    }));
+
+    // Ringkasan jawaban pada daun.
+    const shortText = answer.meaning.length > 20
+      ? answer.meaning.slice(0, 20) + "…"
+      : answer.meaning;
+
+    const text = svgEl("text", {
+      x: x + 37,
+      y: y + 4,
+      "text-anchor": "middle"
+    });
+    text.textContent = shortText;
+    g.appendChild(text);
+
+    const title = svgEl("title");
+    title.textContent = answer.name + ": " + answer.meaning;
+    g.appendChild(title);
+
+    g.addEventListener("click", () => openModal(i));
+    g.addEventListener("keydown", e => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        openModal(i);
+      }
+    });
+
+    leaves.appendChild(g);
+  });
+
+  document.getElementById("progress").textContent =
+    "🍃 " + Object.keys(answers).length +
+    " dari 6 larik sudah memiliki daun makna.";
+}
+
+drawBranches();
+</script>
+
+</body>
+</html>
